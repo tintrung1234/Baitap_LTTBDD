@@ -18,7 +18,8 @@ Nhận diện giọng nói, hình ảnh, xử lý dữ liệu thông minh.
 3.	Viết một ứng dụng có UI
  	
 Demo:
-	![image](https://github.com/user-attachments/assets/f85f99e1-d541-44c4-98d0-3b471e7c4898)
+
+![image](https://github.com/user-attachments/assets/f85f99e1-d541-44c4-98d0-3b471e7c4898)
  
 -	Chức năng của ứng dụng
 Ứng dụng này hiển thị một giao diện hồ sơ cá nhân với:
