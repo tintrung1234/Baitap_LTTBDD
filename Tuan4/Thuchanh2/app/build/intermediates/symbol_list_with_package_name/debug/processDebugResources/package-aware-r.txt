@@ -1,4 +1,4 @@
-com.example.thuhanh2
+com.example.thuchanh2
 attr alpha
 attr font
 attr fontProviderAuthority
@@ -62,6 +62,9 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable image16
+drawable image17
+drawable image18
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -268,7 +271,7 @@ style TextAppearance_Compat_Notification_Info
 style TextAppearance_Compat_Notification_Line2
 style TextAppearance_Compat_Notification_Time
 style TextAppearance_Compat_Notification_Title
-style Theme_Thuhanh2
+style Theme_Thuchanh2
 style Widget_Compat_NotificationActionContainer
 style Widget_Compat_NotificationActionText
 styleable Capability queryPatterns shortcutMatchRequired
