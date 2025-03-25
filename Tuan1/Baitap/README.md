@@ -19,8 +19,8 @@ Nhận diện giọng nói, hình ảnh, xử lý dữ liệu thông minh.
  	
 Demo:
 
-![image](https://github.com/user-attachments/assets/f85f99e1-d541-44c4-98d0-3b471e7c4898)
- 
+ ![Screenshot 2025-03-15 213438](https://github.com/user-attachments/assets/c18cdefa-0b99-49aa-aadb-a96e7f0076aa)
+
 -	Chức năng của ứng dụng
 Ứng dụng này hiển thị một giao diện hồ sơ cá nhân với:
 Thanh công cụ (TopAppBar) có nút Back và Edit.
