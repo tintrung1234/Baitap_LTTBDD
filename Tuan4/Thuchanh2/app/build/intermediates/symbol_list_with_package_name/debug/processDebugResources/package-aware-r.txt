@@ -1,5 +1,12 @@
 com.example.thuchanh2
+attr action
 attr alpha
+attr argType
+attr data
+attr dataPattern
+attr destination
+attr enterAnim
+attr exitAnim
 attr font
 attr fontProviderAuthority
 attr fontProviderCerts
@@ -12,11 +19,26 @@ attr fontProviderSystemFontFamily
 attr fontStyle
 attr fontVariationSettings
 attr fontWeight
+attr graph
 attr lStar
+attr launchSingleTop
+attr mimeType
+attr navGraph
 attr nestedScrollViewStyle
+attr nullable
+attr popEnterAnim
+attr popExitAnim
+attr popUpTo
+attr popUpToInclusive
+attr popUpToSaveState
 attr queryPatterns
+attr restoreState
+attr route
 attr shortcutMatchRequired
+attr startDestination
+attr targetPackage
 attr ttcIndex
+attr uri
 color androidx_core_ripple_material_light
 color androidx_core_secondary_text_default_material_light
 color black
@@ -54,6 +76,9 @@ dimen notification_small_icon_size_as_large
 dimen notification_subtext_size
 dimen notification_top_pad
 dimen notification_top_pad_large_text
+drawable baseline_calendar_month_24
+drawable baseline_home_filled_24
+drawable baseline_library_books_24
 drawable ic_call_answer
 drawable ic_call_answer_low
 drawable ic_call_answer_video
@@ -62,9 +87,15 @@ drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable image10
+drawable image11
+drawable image12
+drawable image15
 drawable image16
 drawable image17
 drawable image18
+drawable image8
+drawable image9
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -125,6 +156,7 @@ id consume_window_insets_tag
 id dialog_button
 id edit_text_id
 id forever
+id hide_graphics_layer_in_inspector_tag
 id hide_ime_id
 id hide_in_inspector_tag
 id icon
@@ -135,6 +167,7 @@ id is_pooling_container_tag
 id italic
 id line1
 id line3
+id nav_controller_view_tag
 id normal
 id notification_background
 id notification_main_column
@@ -252,11 +285,12 @@ string m3c_tooltip_long_press_label
 string m3c_tooltip_pane_description
 string navigation_menu
 string not_selected
-string off
-string on
 string range_end
 string range_start
 string selected
+string state_empty
+string state_off
+string state_on
 string status_bar_notification_info_overflow
 string switch_role
 string tab
@@ -274,11 +308,19 @@ style TextAppearance_Compat_Notification_Title
 style Theme_Thuchanh2
 style Widget_Compat_NotificationActionContainer
 style Widget_Compat_NotificationActionText
+styleable ActivityNavigator android_name action data dataPattern targetPackage
 styleable Capability queryPatterns shortcutMatchRequired
 styleable ColorStateListItem android_color android_alpha android_lStar alpha lStar
 styleable FontFamily fontProviderAuthority fontProviderCerts fontProviderFallbackQuery fontProviderFetchStrategy fontProviderFetchTimeout fontProviderPackage fontProviderQuery fontProviderSystemFontFamily
 styleable FontFamilyFont android_font android_fontWeight android_fontStyle android_ttcIndex android_fontVariationSettings font fontStyle fontVariationSettings fontWeight ttcIndex
 styleable GradientColor android_startColor android_endColor android_type android_centerX android_centerY android_gradientRadius android_tileMode android_centerColor android_startX android_startY android_endX android_endY
 styleable GradientColorItem android_color android_offset
+styleable NavAction android_id destination enterAnim exitAnim launchSingleTop popEnterAnim popExitAnim popUpTo popUpToInclusive popUpToSaveState restoreState
+styleable NavArgument android_name android_defaultValue argType nullable
+styleable NavDeepLink android_autoVerify action mimeType uri
+styleable NavGraphNavigator startDestination
+styleable NavHost navGraph
+styleable NavInclude graph
+styleable Navigator android_label android_id route
 xml backup_rules
 xml data_extraction_rules

@@ -5,8 +5,10 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="34"
+        android:minSdkVersion="28"
         android:targetSdkVersion="35" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <permission
         android:name="com.example.thuchanh2.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -38,10 +40,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:name="androidx.activity.ComponentActivity"
             android:exported="true" />
         <activity
-            android:name="androidx.activity.ComponentActivity"
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
             android:exported="true" />
 
         <provider
