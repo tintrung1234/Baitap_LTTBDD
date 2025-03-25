@@ -32,7 +32,7 @@
 - Thêm chức năng lưu trữ thông tin người dùng.
 - Hỗ trợ nhập tuổi bằng cách sử dụng `NumberKeyboard`.
 
-##DEMO
+## DEMO
 ![Screenshot 2025-03-15 214116](https://github.com/user-attachments/assets/646624a3-5a6f-436f-85ce-42b66ecff486)
 
 
@@ -69,7 +69,7 @@
 - Thêm lưu trữ dữ liệu bằng Room Database.
 - Hỗ trợ quét mã vạch để quản lý sách dễ dàng hơn.
 
-##DEMO
+## DEMO
 ![Screenshot 2025-03-15 214346](https://github.com/user-attachments/assets/22febfbe-9506-47e0-8995-5e641864f27d)
 ![Screenshot 2025-03-15 214346](https://github.com/user-attachments/assets/6f42fe0c-d205-434b-842a-b5f3ba3d628c)
 
