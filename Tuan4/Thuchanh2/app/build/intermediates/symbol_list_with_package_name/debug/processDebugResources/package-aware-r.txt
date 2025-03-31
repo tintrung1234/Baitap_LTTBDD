@@ -79,6 +79,7 @@ dimen notification_top_pad_large_text
 drawable baseline_calendar_month_24
 drawable baseline_home_filled_24
 drawable baseline_library_books_24
+drawable google2
 drawable ic_call_answer
 drawable ic_call_answer_low
 drawable ic_call_answer_video
@@ -92,6 +93,7 @@ drawable image11
 drawable image12
 drawable image15
 drawable image16
+drawable image16_2
 drawable image17
 drawable image18
 drawable image8
@@ -109,6 +111,8 @@ drawable notification_template_icon_bg
 drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
+drawable profile
+drawable vector5
 id accessibility_action_clickable_span
 id accessibility_custom_action_0
 id accessibility_custom_action_1

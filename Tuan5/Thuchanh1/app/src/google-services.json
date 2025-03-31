@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "9099923804",
+    "project_id": "test-f35cd",
+    "storage_bucket": "test-f35cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9099923804:android:cb029f51f8814d5b037199",
+        "android_client_info": {
+          "package_name": "tintrung.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9099923804-bg7s14v34d41b3k9vj1pphg3cleusgfh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxOZfRDHwpsh-nWqwzYojNJqHvq120xUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9099923804-bg7s14v34d41b3k9vj1pphg3cleusgfh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -26,24 +27,34 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,10 +64,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,6 +87,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,12 +107,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ConTroller() {
     val navConTroller = rememberNavController()
-    NavHost(navController = navConTroller, startDestination = "detail/1") {
+    NavHost(navController = navConTroller, startDestination = "information") {
         composable("home") { Home(navConTroller) }
         composable("detail/{taskId}") { backStackEntry ->
             val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
             DetailPage(taskId, navConTroller)
         }
+        composable("signinPage") { SigninPage(navConTroller) }
+        composable("information") { information(navConTroller) }
     }
 }
 
@@ -153,6 +174,349 @@ object ApiClient {
             )
         }
         return tasks
+    }
+}
+
+@Composable
+fun SigninPage(navController: NavController) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White)
+            .padding(top = 21.dp)
+    )
+    {
+        Image(
+            painterResource(R.drawable.image18),
+            contentDescription = null,
+            modifier = Modifier
+                .size(513.dp, 354.dp)
+                .align(alignment = Alignment.TopEnd),
+            contentScale = ContentScale.Crop
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 60.dp, bottom = 30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFD5EDFF),
+                            shape = RoundedCornerShape(5.dp)
+                        )
+                        .padding(10.dp, 20.dp)
+                        .size(202.dp, 197.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                )
+                {
+                    Image(
+                        painterResource(R.drawable.image16_2),
+                        contentDescription = null,
+                        modifier = Modifier.size(128.dp, 88.dp)
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(Modifier.height(15.dp))
+                    Text(
+                        "SmartTasks", color = Color(0xFF2196F3),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp
+                    )
+                    Text(
+                        "A simple and efficient to-do app",
+                        color = Color(0xFF2196F3),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Welcome",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+                Text("Ready to explore? Log in to get started.", fontSize = 12.sp)
+
+                Spacer(Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFD5EDFF),
+                            shape = RoundedCornerShape(5.dp)
+                        )
+                        .size(284.dp, 50.dp)
+                        .clickable(onClick = {}),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painterResource(R.drawable.google2),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp, 20.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "SIGN IN WITH GOOGLE", color = Color(0xFF130160), fontSize = 16.sp,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+            Text("© UTHSmartTasks")
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun information(navController: NavController) {
+    Column(
+        modifier = Modifier
+            .background(color = Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Row {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp)
+                ) {
+                    Button(
+                        onClick = { navController.navigate("home") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.size(40.dp),
+                        shape = RoundedCornerShape(17.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.KeyboardArrowLeft,
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+
+                    Text(
+                        "Profile",
+                        color = Color(0xFF2196F3),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    //picture
+                    Column {
+
+                        Column(
+                            modifier = Modifier
+                                .size(133.dp, 129.dp)
+                                .clip(shape = CircleShape)
+                                .border(2.dp, Color.Black, shape = CircleShape)
+                        ) {
+                            Image(
+                                painterResource(R.drawable.profile),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+
+                        }
+                        Image(
+                            painterResource(R.drawable.vector5),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp, 28.dp)
+                                .align(Alignment.End)
+                                .offset(x = 10.dp, y = -20.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    var text1 = remember { mutableStateOf("") }
+                    var text2 = remember { mutableStateOf("") }
+
+                    Text(
+                        "Name",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(Modifier.height(5.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                2.dp,
+                                color = Color(0xFF544C4C24).copy(0.14f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        BasicTextField(
+                            value = text1.value,
+                            onValueChange = { text1.value = it },
+                            textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Spacer(Modifier.height(15.dp))
+
+                    Text(
+                        "Email",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(Modifier.height(5.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                2.dp,
+                                color = Color(0xFF544C4C24).copy(0.14f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        BasicTextField(
+                            value = text2.value,
+                            onValueChange = { text2.value = it },
+                            textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Spacer(Modifier.height(15.dp))
+
+                    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+                    var showDatePicker by remember { mutableStateOf(false) }
+                    Text(
+                        "Date of Birth",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(Modifier.height(5.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .wrapContentSize(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .border(
+                                2.dp,
+                                color = Color(0xFF544C4C24).copy(0.14f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = { showDatePicker = true }),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            Text(
+                                text = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                                color = Color.Black,
+                                fontSize = 16.sp
+                            )
+
+                            Icon(
+                                Icons.Filled.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp, 27.dp),
+                                tint = Color.Black
+                            )
+                        }
+
+//                }
+
+                        if (showDatePicker) {
+                            DatePickerDialog(
+                                onDismissRequest = { showDatePicker = false },
+                                confirmButton = {
+                                    TextButton(onClick = { showDatePicker = false }) {
+                                        Text("OK")
+                                    }
+                                }
+                            ) {
+                                val datePickerState = rememberDatePickerState(
+                                    initialSelectedDateMillis = selectedDate.toEpochDay() * 86400000
+                                )
+                                DatePicker(state = datePickerState)
+
+                                LaunchedEffect(datePickerState.selectedDateMillis) {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        selectedDate = Instant.ofEpochMilli(millis)
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDate()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    modifier = Modifier
+                        .padding(top = 90.dp)
+                        .size(330.dp, 50.dp),
+                    onClick = { navController.navigate("signinPage") },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2196F3),
+                        contentColor = Color.White,
+                    )
+                ) {
+                    Text(
+                        "BACK",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -474,7 +838,7 @@ fun parseTask(json: String): Task {
 
     Log.d("subtask", "$subtasks")
 
-    return Task(id, title, description, category, status, priority, dueDate, subtasks,attachments)
+    return Task(id, title, description, category, status, priority, dueDate, subtasks, attachments)
 }
 
 
