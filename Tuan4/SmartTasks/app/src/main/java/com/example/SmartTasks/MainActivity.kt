@@ -1,10 +1,8 @@
 package com.example.SmartTasks
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color.rgb
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -28,18 +26,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -48,27 +41,19 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -96,10 +82,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAuthManager: FirebaseAuthManager
@@ -108,7 +90,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val firebaseAuth = FirebaseAuth.getInstance()  // ✅ Get FirebaseAuth instance
+        val firebaseAuth = FirebaseAuth.getInstance()
         val googleSignInClient = GoogleSignIn.getClient(
             this,
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -123,16 +105,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             Thuchanh2Theme {
                 navController = rememberNavController()
-                ConTroller(firebaseAuthManager, navController)  // Pass the navController here
+                ConTroller(firebaseAuthManager, navController)
             }
         }
     }
 
+    //Xu ly dang nhap
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == FirebaseAuthManager.GOOGLE_SIGN_IN_REQUEST_CODE) {
-            firebaseAuthManager.handleSignInResult(data) { user ->  // ✅ No more crash!
+            firebaseAuthManager.handleSignInResult(data) { user ->
                 if (user != null) {
                     Log.d("MainActivity", "Sign-in successful! Navigating to Information page.")
                     navController.navigate("information")
@@ -146,9 +129,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ConTroller(firebaseAuthManager: FirebaseAuthManager, navController: NavHostController) {
-    // Do not reinitialize navController here, use the one passed as a parameter
-    NavHost(navController = navController, startDestination = "signinPage") {
+    val taskRepository = remember { TaskRepository() }
+    val taskViewModel = remember { TaskViewModel(taskRepository) }
+
+    NavHost(navController = navController, startDestination = "taskList") {
         composable("home") { Home(navController) }
+        composable("taskList") { TaskList(navController, taskViewModel) }
+        composable("addnewPage") { AddNew(navController, taskViewModel) }
         composable("detail/{taskId}") { backStackEntry ->
             val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
             DetailPage(taskId, navController)
@@ -168,6 +155,13 @@ data class Task(
     val dueDate: String,
     val subtasks: List<Subtask>,
     val attachments: List<Attachment>
+)
+
+data class Task2(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val priority: String,
 )
 
 data class Subtask(
@@ -259,401 +253,344 @@ class FirebaseAuthManager(
     }
 }
 
+class TaskRepository {
+    private val taskList = mutableListOf(
+        Task2(
+            id = 1,
+            title = "Buy Groceries",
+            description = "Milk, Eggs, Bread, Fruits",
+            priority = "High"
+        ),
+        Task2(
+            id = 2,
+            title = "Project Meeting",
+            description = "Discuss project timeline and deliverables",
+            priority = "Medium"
+        ),
+        Task2(
+            id = 3,
+            title = "Gym Session",
+            description = "Leg day workout at 6 PM",
+            priority = "Low"
+        )
+    )
 
-@SuppressLint("ContextCastToActivity")
+    fun getTasks(): List<Task2> = taskList
+
+    fun addTask(task: Task2) {
+        taskList.add(task)
+    }
+}
+
+class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
+    private val _tasks = mutableStateListOf<Task2>()
+    val tasks: List<Task2> get() = _tasks
+
+    init {
+        _tasks.addAll(repository.getTasks())
+    }
+
+    fun addTask(task: Task2) {
+        repository.addTask(task)
+        _tasks.add(task)
+    }
+}
+
 @Composable
-fun SigninPage(navController: NavHostController, firebaseAuthManager: FirebaseAuthManager) {
-    val context = LocalContext.current
-    val activity = context as? ComponentActivity
+fun TaskList(navController: NavController, viewModel: TaskViewModel) {
+    val tasks = viewModel.tasks
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color.White)
-            .padding(top = 21.dp)
+            .padding(20.dp)
     )
     {
-        Image(
-            painterResource(R.drawable.image18),
-            contentDescription = null,
-            modifier = Modifier
-                .size(513.dp, 354.dp)
-                .align(alignment = Alignment.TopEnd),
-            contentScale = ContentScale.Crop
-        )
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 60.dp, bottom = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            Spacer(Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Button(
+                    onClick = { navController.navigate("home") },
+                    modifier = Modifier.size(50.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(rgb(33, 150, 243)))
+                ) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowLeft,
+                        contentDescription = null,
+                        Modifier.size(40.dp)
+                    )
+                }
 
+                Text(
+                    "List",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(rgb(33, 150, 243)),
+                    fontSize = 25.sp
+                )
+
+                Image(
+                    painterResource(R.drawable.icon_add),
+                    contentDescription = null,
+                    modifier = Modifier.size(50.dp)
+                        .clickable(onClick = {navController.navigate("addnewPage")})
+                )
+            }
+
+        Spacer(Modifier.height(20.dp))
+        Column{
+            if (tasks.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .background(
-                            color = Color(0xFFD5EDFF),
-                            shape = RoundedCornerShape(5.dp)
+                            color = Color(rgb(230, 230, 230)), shape = RoundedCornerShape(10.dp)
                         )
-                        .padding(10.dp, 20.dp)
-                        .size(202.dp, 197.dp),
+                        .fillMaxWidth()
+                        .padding(top = 40.dp, bottom = 30.dp, start = 20.dp, end = 20.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
-                )
-                {
-                    Image(
-                        painterResource(R.drawable.image16_2),
-                        contentDescription = null,
-                        modifier = Modifier.size(128.dp, 88.dp)
-                    )
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(Modifier.height(15.dp))
-                    Text(
-                        "SmartTasks", color = Color(0xFF2196F3),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp
+                    Image(
+                        painterResource(R.drawable.image12),
+                        contentDescription = null,
+                        modifier = Modifier.size(112.dp)
                     )
-                    Text(
-                        "A simple and efficient to-do app",
-                        color = Color(0xFF2196F3),
-                        fontSize = 12.sp
-                    )
+                    Spacer(Modifier.height(20.dp))
+                    Text("No Tasks Yet!", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Stay productive—add something to do", fontSize = 12.sp)
+                }
+            } else {
+                LazyColumn() {
+                    items(tasks) { task ->
+                        TaskCard2(task, navController)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
+        }
+        }
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxHeight(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.elevatedCardElevation(10.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Text(
-                    "Welcome",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-                Text("Ready to explore? Log in to get started.", fontSize = 12.sp)
-
-                Spacer(Modifier.height(20.dp))
-
                 Row(
                     modifier = Modifier
-                        .background(
-                            color = Color(0xFFD5EDFF),
-                            shape = RoundedCornerShape(5.dp)
-                        )
-                        .size(284.dp, 50.dp)
-                        .clickable {
-                            Log.d("SigninPage", "Sign-in button clicked")
-                            if (activity != null) {
-                                firebaseAuthManager.signInWithGoogle(activity) { user ->
-                                    Log.d("SigninPage", "Sign-in callback triggered: user = $user")
-                                    if (user != null) {
-                                        Log.d("SigninPage", "Navigating to information page")
-                                        navController.navigate("information")
-                                    }
-                                }
-                            } else {
-                                Log.e(
-                                    "SigninPage",
-                                    "Context is not an instance of ComponentActivity"
-                                )
-                            }
-                        },
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Image(
-                        painterResource(R.drawable.google2),
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_home_filled_24),
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp, 20.dp)
+                        modifier = Modifier.size(35.dp),
+                        tint = Color(0xFF2196F3)
                     )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "SIGN IN WITH GOOGLE", color = Color(0xFF130160), fontSize = 16.sp,
-                        lineHeight = 16.sp
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(35.dp),
+                        tint = Color(0xFF333333B2)
+                    )
+                    Spacer(modifier = Modifier.size(50.dp))
+                    Icon(
+                        painterResource(R.drawable.baseline_library_books_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(35.dp),
+                        tint = Color(0xFF333333B2)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(35.dp)
+                            .clickable(onClick = { navController.navigate("signinPage") }),
+                        tint = Color(0xFF333333B2)
                     )
                 }
             }
-            Text("© UTHSmartTasks")
 
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-27).dp)
+                    .background(Color(0xFF2196F3), shape = RoundedCornerShape(40.dp))
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(35.dp)
+                        .clickable(onClick = {navController.navigate("addnewPage")}),
+                    tint = Color.White
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun information(navController: NavController, firebaseAuthManager: FirebaseAuthManager) {
-
-    val user = remember { mutableStateOf<FirebaseUser?>(null) }
-    // Fetch user details from FirebaseAuthManager
-    LaunchedEffect(Unit) {
-        firebaseAuthManager.getCurrentUser { fetchedUser ->
-            Log.d("UserInfo", "Fetched user: $fetchedUser")
-            user.value = fetchedUser
-        }
-    }
-
-
+fun AddNew(navController: NavController, viewModel: TaskViewModel) {
     Column(
         modifier = Modifier
-            .background(color = Color.White)
+            .fillMaxSize()
+            .padding(20.dp)
     ) {
+        Row {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+            ) {
+                Button(
+                    onClick = { navController.navigate("signinPage") },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(17.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowLeft,
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+
+                Text(
+                    "Add New",
+                    color = Color(0xFF2196F3),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Row {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                var task by remember { mutableStateOf("Do homework") }
+                var description by remember { mutableStateOf("Don't give up") }
+
+                Spacer(Modifier.height(20.dp))
+
+                Text(
+                    "Task",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(Modifier.height(5.dp))
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp)
-                ) {
-                    Button(
-                        onClick = { navController.navigate("signinPage") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                        contentPadding = PaddingValues(0.dp),
-                        modifier = Modifier.size(40.dp),
-                        shape = RoundedCornerShape(17.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.KeyboardArrowLeft,
-                            contentDescription = null,
-                            modifier = Modifier.size(30.dp)
+                        .border(
+                            2.dp,
+                            color = Color(0xFF544C4C24).copy(0.14f),
+                            shape = RoundedCornerShape(8.dp)
                         )
-                    }
-
-                    Text(
-                        "Profile",
-                        color = Color(0xFF2196F3),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .align(Alignment.Center)
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    BasicTextField(
+                        value = "Do homework",
+                        onValueChange = { task = it },
+                        textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-            }
 
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(15.dp))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
+                Text(
+                    "Discription",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(Modifier.height(5.dp))
+
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .fillMaxWidth()
+                        .border(
+                            2.dp,
+                            color = Color(0xFF544C4C24).copy(0.14f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    //picture
-                    Column {
-
-                        Column(
-                            modifier = Modifier
-                                .size(133.dp, 129.dp)
-                                .clip(shape = CircleShape)
-                                .border(2.dp, Color.Black, shape = CircleShape)
-                        ) {
-                            Image(
-                                painterResource(R.drawable.profile),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop
-                            )
-
-                        }
-                        Image(
-                            painterResource(R.drawable.vector5),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(30.dp, 28.dp)
-                                .align(Alignment.End)
-                                .offset(x = 10.dp, y = -20.dp)
-                        )
-                    }
-
-                    Spacer(Modifier.height(20.dp))
-
-                    val text1 = remember { derivedStateOf { user.value?.displayName ?: "Unknown" } }
-                    val email = remember { derivedStateOf { user.value?.email ?: "Unknown" } }
-
-                    Text(
-                        "Name",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.align(Alignment.Start)
+                    BasicTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                        modifier = Modifier.fillMaxWidth()
+                            .height(100.dp)
                     )
+                }
 
-                    Spacer(Modifier.height(5.dp))
+                Spacer(Modifier.height(15.dp))
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                2.dp,
-                                color = Color(0xFF544C4C24).copy(0.14f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                    ) {
-                        BasicTextField(
-                            value = text1.value,
-                            onValueChange = { text1.value },
-                            textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                Button(
+                    modifier = Modifier
+                        .size(170.dp, 50.dp),
+                    onClick = {
+                        if (task.isNotEmpty() && description.isNotEmpty()) {
+                            viewModel.addTask(
+                                Task2(
+                                    id = viewModel.tasks.size + 1,
+                                    title = task,
+                                    description = description,
+                                    priority = "Low"
 
-                    Spacer(Modifier.height(15.dp))
-
-                    Text(
-                        "Email",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-
-                    Spacer(Modifier.height(5.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                2.dp,
-                                color = Color(0xFF544C4C24).copy(0.14f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                    ) {
-                        BasicTextField(
-                            value = email.value,
-                            onValueChange = { email.value },
-                            textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(Modifier.height(15.dp))
-
-                    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-                    var showDatePicker by remember { mutableStateOf(false) }
-                    Text(
-                        "Date of Birth",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-
-                    Spacer(Modifier.height(5.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize(Alignment.TopStart)
-                            .fillMaxWidth()
-                            .border(
-                                2.dp,
-                                color = Color(0xFF544C4C24).copy(0.14f),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                    ) {
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = { showDatePicker = true }),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            Text(
-                                text = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                                color = Color.Black,
-                                fontSize = 16.sp
-                            )
-
-                            Icon(
-                                Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp, 27.dp),
-                                tint = Color.Black
-                            )
-                        }
-
-//                }
-
-                        if (showDatePicker) {
-                            DatePickerDialog(
-                                onDismissRequest = { showDatePicker = false },
-                                confirmButton = {
-                                    TextButton(onClick = { showDatePicker = false }) {
-                                        Text("OK")
-                                    }
-                                }
-                            ) {
-                                val datePickerState = rememberDatePickerState(
-                                    initialSelectedDateMillis = selectedDate.toEpochDay() * 86400000
                                 )
-                                DatePicker(state = datePickerState)
-
-                                LaunchedEffect(datePickerState.selectedDateMillis) {
-                                    datePickerState.selectedDateMillis?.let { millis ->
-                                        selectedDate = Instant.ofEpochMilli(millis)
-                                            .atZone(ZoneId.systemDefault())
-                                            .toLocalDate()
-                                    }
-                                }
-                            }
+                            )
+                            navController.popBackStack()
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2196F3),
+                        contentColor = Color.White,
+                    )
+                ) {
+                    Text(
+                        "Add",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
-                Column {
-                    Button(
-                        modifier = Modifier
-                            .padding(top = 90.dp)
-                            .size(330.dp, 50.dp),
-                        onClick = { navController.navigate("signinPage") },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2196F3),
-                            contentColor = Color.White,
-                        )
-                    ) {
-                        Text(
-                            "BACK",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
 
-                    Spacer(Modifier.height(10.dp))
-
-                    Button(
-                        modifier = Modifier
-                            .size(330.dp, 50.dp),
-                        onClick = {
-                            firebaseAuthManager.signOut()
-                            navController.navigate("signinPage") {
-                                popUpTo("signinPage") { inclusive = true }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2196F3),
-                            contentColor = Color.White,
-                        )
-                    ) {
-                        Text(
-                            "Sign Out",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
+                Spacer(Modifier.height(10.dp))
             }
         }
     }
@@ -772,7 +709,7 @@ fun Home(navController: NavController) {
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(20.dp),
-            contentAlignment = Alignment.BottomCenter // 🔥 Căn tất cả về đáy
+            contentAlignment = Alignment.BottomCenter
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -809,12 +746,13 @@ fun Home(navController: NavController) {
                     Icon(
                         imageVector = Icons.Filled.Settings,
                         contentDescription = null,
-                        modifier = Modifier.size(35.dp),
+                        modifier = Modifier
+                            .size(35.dp)
+                            .clickable(onClick = { navController.navigate("signinPage") }),
                         tint = Color(0xFF333333B2)
                     )
                 }
             }
-
 
             Box(
                 modifier = Modifier
@@ -829,6 +767,61 @@ fun Home(navController: NavController) {
                     modifier = Modifier.size(35.dp),
                     tint = Color.White
                 )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun TaskCard2(task: Task2, navController: NavController) {
+    val checked = remember { mutableStateOf(false) }
+
+    val backgroundColor = when (task.priority) {
+        "High" -> Color(rgb(225, 187, 193))
+        "Medium" -> Color(rgb(141, 156, 11)).copy(alpha = 0.3f)
+        "Low" -> Color(rgb(183, 233, 255))
+        else -> Color.LightGray
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable { navController.navigate("detail/${task.id}") }
+    ) {
+        Row(
+            modifier = Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.padding(end = 4.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Checkbox(
+                    checked = checked.value,
+                    onCheckedChange = { isChecked -> checked.value = isChecked },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = Color.Black,
+                        checkmarkColor = Color.White
+                    )
+                )
+            }
+            Column {
+                Text(
+                    text = "${task.title}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "${task.description}")
+
+
             }
         }
     }
@@ -981,215 +974,12 @@ fun parseTask(json: String): Task {
 }
 
 
-@Composable
-fun DetailPage(taskId: String, navController: NavController) {
-    var task by remember { mutableStateOf<Task?>(null) }
-    LaunchedEffect(taskId) {
-        task = fetchTask(taskId)
-    }
-    val checked = remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Spacer(Modifier.height(20.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(
-                onClick = { navController.navigate("home") },
-                modifier = Modifier.size(50.dp),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(rgb(33, 150, 243)))
-            ) {
-                Icon(
-                    Icons.Filled.KeyboardArrowLeft,
-                    contentDescription = null,
-                    Modifier.size(40.dp)
-                )
-            }
-
-            Text(
-                "Detail",
-                fontWeight = FontWeight.Bold,
-                color = Color(rgb(33, 150, 243)),
-                fontSize = 25.sp
-            )
-
-            Image(
-                painterResource(R.drawable.image15),
-                contentDescription = null,
-                Modifier.size(50.dp)
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        //Title
-        Text(
-            "${task?.title}",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        //Discription
-        Text(
-            "${task?.description}",
-            fontSize = 14.sp
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = Color(rgb(225, 187, 193)),
-                    shape = RoundedCornerShape(10.dp)
-                )
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            //Column1
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painterResource(R.drawable.image8),
-                        contentDescription = null,
-                        Modifier.size(28.dp)
-                    )
-                    Column(
-                        Modifier.padding(start = 5.dp)
-                    ) {
-                        Text("Category", fontSize = 8.sp)
-                        Text("${task?.category}", fontWeight = FontWeight.Bold, fontSize = 8.sp)
-                    }
-                }
-            }
-            Spacer(Modifier.width(5.dp))
-
-            //Column2
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painterResource(R.drawable.image9),
-                        contentDescription = null,
-                        Modifier.size(28.dp)
-                    )
-                    Column(
-                        Modifier.padding(start = 5.dp)
-                    ) {
-                        Text("Status", fontSize = 8.sp)
-                        Text("${task?.status}", fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            Spacer(Modifier.width(5.dp))
-
-            //Column3
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painterResource(R.drawable.image10),
-                        contentDescription = null,
-                        Modifier.size(28.dp)
-                    )
-                    Column(
-                        Modifier.padding(start = 5.dp)
-                    ) {
-                        Text("Priority", fontSize = 8.sp)
-                        Text("${task?.priority}", fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-
-        Text(
-            "Subtasks", fontSize = 18.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 20.dp)
-        )
-        Column {
-            task?.subtasks?.forEach { subtask ->
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFE6E6E6),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                ) {
-                    Checkbox(
-                        checked = checked.value,
-                        onCheckedChange = { isChecked -> checked.value = isChecked },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = Color.Black,
-                            checkmarkColor = Color.White
-                        )
-                    )
-                    Text("${subtask.title}")
-                }
-                Spacer(Modifier.height(10.dp))
-            }
-        }
-
-        Text(
-            "Attachments", fontSize = 18.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 20.dp)
-        )
-
-        val context = LocalContext.current
-
-        Column {
-            task?.attachments?.forEach { attachment ->
-                Log.d("Attachments", "$attachment")
-
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFE6E6E6),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        .padding(10.dp)
-                        .fillMaxWidth()
-                        .clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(attachment.fileUrl))
-                            context.startActivity(intent)
-                        }
-                ) {
-                    Icon(
-                        painterResource(R.drawable.image11),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(attachment.fileName, fontSize = 18.sp)
-                }
-
-                Spacer(Modifier.height(10.dp))
-            }
-        }
-    }
-}
-
 //@Preview(showBackground = true)
 //@Composable
 //fun GreetingPreview() {
 //    Thuchanh2Theme {
 //        val navConTroller = rememberNavController()
-//        lateinit var firebaseAuthManager: FirebaseAuthManager
-//
-//        information(navConTroller, firebaseAuthManager)
+////        Home(navConTroller)
+//        AddNew(navConTroller)
 //    }
 //}
